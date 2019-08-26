@@ -1,9 +1,10 @@
-
 language: rust
+
 rust:
 - stable
 - beta
 - nightly
+
 matrix:
   allow_failures:
   - rust: nightly
@@ -11,8 +12,12 @@ matrix:
 os:
 - linux
 - osx
+
+script: cargo build --verbose --release;
+
 before_deploy:
 - mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"
+
 deploy:
   provider: releases
   api_key:
