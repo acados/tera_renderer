@@ -13,7 +13,10 @@ os:
 script: cargo build --verbose --release;
 
 before_deploy:
-- mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"
+  - if [ "$TRAVIS_OS_NAME" = "osx" ];   then mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then rename target\release\t_renderer "target\release\t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"; fi
+
 
 deploy:
   provider: releases
