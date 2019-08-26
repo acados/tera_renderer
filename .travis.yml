@@ -15,8 +15,8 @@ os:
 
 script: cargo build --verbose --release;
 
-before_deploy:
-- mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"
+# before_deploy:
+# - mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"
 
 deploy:
   provider: releases
