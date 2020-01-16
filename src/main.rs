@@ -9,7 +9,7 @@ use std::fs::File;
 use std::io::Write;
 use std::{fs, io, path::Path};
 use std::io::Read;
-
+use std::process;
 use std::env;
 
 pub fn do_nothing_filter(value: Value, _: HashMap<String, Value>) -> Result<Value> {
@@ -56,6 +56,7 @@ fn main() -> io::Result<()> {
             for e in e.iter().skip(1) {
                 println!("Reason: {}", e);
             }
+            process::exit(1);
         }
     };
 
