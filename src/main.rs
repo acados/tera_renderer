@@ -2,12 +2,12 @@
 
 use std::collections::HashMap;
 
-use tera::{Tera, Context, Result};
+use tera::{Result};
 use serde_json::{Value, to_value};
 
 use std::fs::File;
 use std::io::Write;
-use std::{fs, io, path::Path};
+use std::{io};
 use std::io::Read;
 use std::process;
 use std::env;
@@ -24,7 +24,7 @@ fn main() -> io::Result<()> {
     let template_glob = &args[1]; // relative glob to template file
     let template_file = &args[2]; // template file path relative 
                                   // to 'template_glob'
-    
+
     let json_file     = &args[3]; // relative path json file
     let out_file      = &args[4]; // relative path to output file
 
