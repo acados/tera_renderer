@@ -15,7 +15,7 @@ script: cargo build --verbose --release;
 before_deploy:
   - if [ "$TRAVIS_OS_NAME" = "osx" ];   then mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then mv target/release/t_renderer "target/release/t_renderer-$TRAVIS_TAG-$TRAVIS_OS_NAME"; fi
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then powershell Rename-Item "target\\release\\t_renderer" "target\\release\\t_renderer$TRAVIS_TAG-$TRAVIS_OS_NAME"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then powershell Rename-Item "target\\release\\t_renderer-$TRAVIS_TAG" "target\\release\\t_renderer$TRAVIS_TAG-$TRAVIS_OS_NAME"; fi
 
 
 deploy:
