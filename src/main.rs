@@ -1,9 +1,5 @@
-#[macro_use] extern crate tera;
-
-use std::collections::HashMap;
-
-use tera::{Result};
-use serde_json::{Value, to_value};
+use tera::{Tera, Context};
+use serde_json::{Value};
 
 use std::fs::File;
 use std::io::Write;
@@ -12,10 +8,32 @@ use std::io::Read;
 use std::process;
 use std::env;
 
-pub fn do_nothing_filter(value: Value, _: HashMap<String, Value>) -> Result<Value> {
-    let s = try_get_value!("do_nothing_filter", "value", String, value);
-    Ok(to_value(&s).unwrap())
+// pub fn do_nothing_filter(value: Value, _: HashMap<String, Value>) -> Result<Value> {
+//     let s = try_get_value!("do_nothing_filter", "value", String, value);
+//     Ok(to_value(&s).unwrap())
+// }
+
+/// Compile templates or exits process
+///
+/// Takes a glob as only argument.
+/// If it fails, it will print all the errors and exit the process
+///
+/// ```rust,ignore
+/// let mut tera = compile_templates!("templates/**/*");
+/// ```
+
+macro_rules! compile_templates {
+    ($glob: expr) => {{
+        match $crate::Tera::new($glob) {
+            Ok(t) => t,
+            Err(e) => {
+                println!("Parsing error(s): {}", e);
+                ::std::process::exit(1);
+            }
+        }
+    }};
 }
+
 
 fn main() -> io::Result<()> {
     // read command line arguments
@@ -41,21 +59,22 @@ fn main() -> io::Result<()> {
     
     // Parse the string of data into serde_json::Value.
     let v: Value = serde_json::from_str(&contents)?;
+    let context: Context = Context::from_value(v).unwrap();
 
     let mut tera = compile_templates!(template_glob);
     tera.autoescape_on(vec![".swp"]);
-    tera.register_filter("do_nothing", do_nothing_filter);
+    // tera.register_filter("do_nothing", do_nothing_filter);
 
-    match tera.render(template_file, &v) {
+    match tera.render(template_file, &context) {
         Ok(s) => {
             let mut f_out = File::create(out_file).expect("Unable to create file");
             f_out.write_all(s.as_bytes())?;
         },
         Err(e) => {
             println!("Error: {}", e);
-            for e in e.iter().skip(1) {
-                println!("Reason: {}", e);
-            }
+            // for e in e.iter().skip(1) {
+            //     println!("Reason: {}", e);
+            // }
             process::exit(1);
         }
     };
