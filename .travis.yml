@@ -10,6 +10,10 @@ os:
 - osx
 - windows
 
+arch:
+- amd64
+- arm64
+
 script:
   - cargo build --verbose --release;
 
