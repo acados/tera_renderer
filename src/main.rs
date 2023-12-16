@@ -2,12 +2,14 @@
 
 use std::collections::HashMap;
 
-use tera::{Result};
+use tera::Tera;
+use tera::Context;
+use tera::Result;
 use serde_json::{Value, to_value};
 
 use std::fs::File;
 use std::io::Write;
-use std::{io};
+use std::io;
 use std::io::Read;
 use std::process;
 use std::env;
@@ -41,21 +43,30 @@ fn main() -> io::Result<()> {
     
     // Parse the string of data into serde_json::Value.
     let v: Value = serde_json::from_str(&contents)?;
+    // Convert serde_json::Value to tera::Context
+    let ctx: Context = Context::from_serialize(&v).unwrap();
 
-    let mut tera = compile_templates!(template_glob);
-    tera.autoescape_on(vec![".swp"]);
-    tera.register_filter("do_nothing", do_nothing_filter);
+    // let mut tera = compile_templates!(template_glob);
+    let tera = match Tera::new(template_glob) {
+        Ok(t) => t,
+        Err(e) => {
+            println!("Parsing error(s): {}", e);
+            ::std::process::exit(1);
+        }
+    };
+    //tera.autoescape_on(vec![".swp"]);
+    //tera.register_filter("do_nothing", do_nothing_filter);
 
-    match tera.render(template_file, &v) {
+    match tera.render(template_file, &ctx) {
         Ok(s) => {
             let mut f_out = File::create(out_file).expect("Unable to create file");
             f_out.write_all(s.as_bytes())?;
         },
         Err(e) => {
             println!("Error: {}", e);
-            for e in e.iter().skip(1) {
-                println!("Reason: {}", e);
-            }
+            //for e in e.iter().skip(1) {
+                //println!("Reason: {}", e);
+            //}
             process::exit(1);
         }
     };
