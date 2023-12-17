@@ -4,11 +4,10 @@ use tera::Context;
 
 use std::fs::File;
 use std::io::Write;
-use std::io;
 use std::io::Read;
-use std::process;
+//use std::process;
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(version)]
 struct Args {
     template_glob: String,
@@ -17,7 +16,7 @@ struct Args {
     out_file: String
 }
 
-fn main()   -> io::Result<()> {
+fn main() -> Result<(), tera::Error> {
     // read command line arguments
     let args = Args::parse();
 
@@ -35,35 +34,38 @@ fn main()   -> io::Result<()> {
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
-    // println!("template file: {}", template_file);
-    // println!("json file: {}"    , json_file);
-    // println!("out file: {}"     , out_file);
-    // println!("{}", contents);
-    
     // Parse the string of data into serde_json::Value.
     let v: serde_json::Value = serde_json::from_str(&contents)?;
     // Convert serde_json::Value to tera::Context
-    let ctx: Context = Context::from_serialize(&v).unwrap();
+    let ctx: Context = Context::from_serialize(&v)?;
 
-    let tera = match Tera::new(template_glob) {
-        Ok(t) => t,
-        Err(e) => {
-            println!("Parsing error(s): {}", e);
-            ::std::process::exit(1);
-        }
-    };
+    let tera = Tera::new(template_glob)?;
+    //let tera = match Tera::new(template_glob) {
+        //Ok(t) => t,
+        //Err(e) => {
+            //println!("Parsing error(s): {}", e);
+            //::std::process::exit(1);
+        //}
+    //};
 
-    match tera.render(template_file, &ctx) {
-        Ok(s) => {
-            let mut f_out = File::create(out_file).expect("Unable to create file");
-            f_out.write_all(s.as_bytes())?;
-        },
-        Err(e) => {
-            println!("Error: {}", e);
-            process::exit(1);
-        }
-    };
+    let s = tera.render(template_file, &ctx)?;
+    let mut f_out = File::create(out_file).expect("Unable to create file");
+    f_out.write_all(s.as_bytes())?;
+    //match tera.render(template_file, &ctx) {
+        //Ok(s) => {
+            //let mut f_out = File::create(out_file).expect("Unable to create file");
+            //f_out.write_all(s.as_bytes());
+        //}
+        //Err(e) => {
+            //println!("Error: {}", e);
+            //let mut cause = e.source();
+            //while let Some(e) = cause {
+                //println!("Reason: {}", e);
+                //cause = e.source();
+            //}
+        //}
+    //}
 
-    // println!("-> successfully rendered template!\n");
+     println!("Successfully rendered template!");
     Ok(())
 }
