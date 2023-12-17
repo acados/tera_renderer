@@ -11,3 +11,4 @@ clap = { version = "4.4.11", features = ["derive"] }
 
 [profile.release]
 opt-level = 'z'
+lto = "fat"
