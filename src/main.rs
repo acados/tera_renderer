@@ -5,7 +5,6 @@ use tera::Context;
 use std::fs::File;
 use std::io::Write;
 use std::io::Read;
-//use std::process;
 
 #[derive(Parser)]
 #[command(version)]
@@ -33,39 +32,16 @@ fn main() -> Result<(), tera::Error> {
     let mut file = File::open(json_file)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-
     // Parse the string of data into serde_json::Value.
     let v: serde_json::Value = serde_json::from_str(&contents)?;
     // Convert serde_json::Value to tera::Context
     let ctx: Context = Context::from_serialize(&v)?;
-
+    // load template
     let tera = Tera::new(template_glob)?;
-    //let tera = match Tera::new(template_glob) {
-        //Ok(t) => t,
-        //Err(e) => {
-            //println!("Parsing error(s): {}", e);
-            //::std::process::exit(1);
-        //}
-    //};
-
+    // render template
     let s = tera.render(template_file, &ctx)?;
     let mut f_out = File::create(out_file).expect("Unable to create file");
     f_out.write_all(s.as_bytes())?;
-    //match tera.render(template_file, &ctx) {
-        //Ok(s) => {
-            //let mut f_out = File::create(out_file).expect("Unable to create file");
-            //f_out.write_all(s.as_bytes());
-        //}
-        //Err(e) => {
-            //println!("Error: {}", e);
-            //let mut cause = e.source();
-            //while let Some(e) = cause {
-                //println!("Reason: {}", e);
-                //cause = e.source();
-            //}
-        //}
-    //}
-
-     println!("Successfully rendered template!");
+     println!("Successfully rendered template: {}", template_file);
     Ok(())
 }
