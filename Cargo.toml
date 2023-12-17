@@ -1,12 +1,13 @@
 [package]
 name = "t_renderer"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["andrea.zanelli <andrea.zanelli@imtek.uni-freiburg.de>"]
 edition = "2018"
 
 [dependencies]
 tera = "1.19"
 serde_json = "1.0"
+clap = { version = "4.4.11", features = ["derive"] }
 
 [profile.release]
 opt-level = 'z'

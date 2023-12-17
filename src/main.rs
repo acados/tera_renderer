@@ -1,52 +1,50 @@
-#[macro_use] extern crate tera;
-
-use std::collections::HashMap;
-
+use clap::Parser;
 use tera::Tera;
 use tera::Context;
-use tera::Result;
-use serde_json::{Value, to_value};
 
 use std::fs::File;
 use std::io::Write;
 use std::io;
 use std::io::Read;
 use std::process;
-use std::env;
 
-pub fn do_nothing_filter(value: Value, _: HashMap<String, Value>) -> Result<Value> {
-    let s = try_get_value!("do_nothing_filter", "value", String, value);
-    Ok(to_value(&s).unwrap())
+#[derive(Parser, Debug)]
+#[command(version)]
+struct Args {
+    template_glob: String,
+    template_file: String,
+    json_file: String,
+    out_file: String
 }
 
-fn main() -> io::Result<()> {
+fn main()   -> io::Result<()> {
     // read command line arguments
-    let args: Vec<String> = env::args().collect();
+    let args = Args::parse();
 
-    let template_glob = &args[1]; // relative glob to template file
-    let template_file = &args[2]; // template file path relative 
-                                  // to 'template_glob'
+    // relative glob to template file
+    let template_glob = &args.template_glob;
+    // template file path relative to 'template_glob'
+    let template_file = &args.template_file; 
+    // relative path json file
+    let json_file = &args.json_file;
+    // relative path to output file
+    let out_file = &args.out_file;
 
-    let json_file     = &args[3]; // relative path json file
-    let out_file      = &args[4]; // relative path to output file
-
-    // print arguments
-    // println!("template path: {}", template_glob);
-    // println!("template file: {}", template_file);
-    // println!("json file: {}"    , json_file);
-    // println!("out file: {}"     , out_file);
-
+    // open json file
     let mut file = File::open(json_file)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
+
+    // println!("template file: {}", template_file);
+    // println!("json file: {}"    , json_file);
+    // println!("out file: {}"     , out_file);
     // println!("{}", contents);
     
     // Parse the string of data into serde_json::Value.
-    let v: Value = serde_json::from_str(&contents)?;
+    let v: serde_json::Value = serde_json::from_str(&contents)?;
     // Convert serde_json::Value to tera::Context
     let ctx: Context = Context::from_serialize(&v).unwrap();
 
-    // let mut tera = compile_templates!(template_glob);
     let tera = match Tera::new(template_glob) {
         Ok(t) => t,
         Err(e) => {
@@ -54,8 +52,6 @@ fn main() -> io::Result<()> {
             ::std::process::exit(1);
         }
     };
-    //tera.autoescape_on(vec![".swp"]);
-    //tera.register_filter("do_nothing", do_nothing_filter);
 
     match tera.render(template_file, &ctx) {
         Ok(s) => {
@@ -64,9 +60,6 @@ fn main() -> io::Result<()> {
         },
         Err(e) => {
             println!("Error: {}", e);
-            //for e in e.iter().skip(1) {
-                //println!("Reason: {}", e);
-            //}
             process::exit(1);
         }
     };
