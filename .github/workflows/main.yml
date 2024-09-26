@@ -17,6 +17,8 @@ jobs:
             architecture: linux-amd64
           - runs-on: macos-latest
             architecture: osx-amd64
+          - runs-on: windows-latest
+            architecture: windows-amd64
 
     name: Build on ${{ matrix.runs-on }}
 
