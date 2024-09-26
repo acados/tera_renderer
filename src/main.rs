@@ -4,6 +4,7 @@ use tera::Context;
 
 use std::fs::File;
 use std::io::Write;
+use std::io;
 use std::io::Read;
 use std::process;
 
@@ -16,7 +17,7 @@ struct Args {
     out_file: String
 }
 
-fn main() -> Result<(), tera::Error> {
+fn main()   -> io::Result<()> {
     // read command line arguments
     let args = Args::parse();
 
@@ -42,13 +43,27 @@ fn main() -> Result<(), tera::Error> {
     // Parse the string of data into serde_json::Value.
     let v: serde_json::Value = serde_json::from_str(&contents)?;
     // Convert serde_json::Value to tera::Context
-    let ctx: Context = Context::from_serialize(&v)?;
-    // load template
-    let tera = Tera::new(template_glob)?;
-    // render template
-    let s = tera.render(template_file, &ctx)?;
-    let mut f_out = File::create(out_file).expect("Unable to create file");
-    f_out.write_all(s.as_bytes())?;
-    println!("Successfully rendered template: {}", template_file);
+    let ctx: Context = Context::from_serialize(&v).unwrap();
+
+    let tera = match Tera::new(template_glob) {
+        Ok(t) => t,
+        Err(e) => {
+            println!("Parsing error(s): {}", e);
+            ::std::process::exit(1);
+        }
+    };
+
+    match tera.render(template_file, &ctx) {
+        Ok(s) => {
+            let mut f_out = File::create(out_file).expect("Unable to create file");
+            f_out.write_all(s.as_bytes())?;
+        },
+        Err(e) => {
+            println!("Error: {}", e);
+            process::exit(1);
+        }
+    };
+
+    // println!("-> successfully rendered template!\n");
     Ok(())
 }
