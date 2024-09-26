@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: t_renderer-${{ matrix.architecture }}
-          path: target/release/t_renderer
+          path: ${{ runner.os == 'Windows' && 'target\\release\\t_renderer.exe' || 'target/release/t_renderer' }}
 
   build-on-aarch:
     runs-on: ubuntu-latest
