@@ -5,8 +5,9 @@ use tera::Context;
 use std::fs::File;
 use std::io::Write;
 use std::io::Read;
+use std::process;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(version)]
 struct Args {
     template_glob: String,
@@ -32,6 +33,12 @@ fn main() -> Result<(), tera::Error> {
     let mut file = File::open(json_file)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
+
+    // println!("template file: {}", template_file);
+    // println!("json file: {}"    , json_file);
+    // println!("out file: {}"     , out_file);
+    // println!("{}", contents);
+    
     // Parse the string of data into serde_json::Value.
     let v: serde_json::Value = serde_json::from_str(&contents)?;
     // Convert serde_json::Value to tera::Context
@@ -42,6 +49,6 @@ fn main() -> Result<(), tera::Error> {
     let s = tera.render(template_file, &ctx)?;
     let mut f_out = File::create(out_file).expect("Unable to create file");
     f_out.write_all(s.as_bytes())?;
-     println!("Successfully rendered template: {}", template_file);
+    println!("Successfully rendered template: {}", template_file);
     Ok(())
 }
