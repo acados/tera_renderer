@@ -45,24 +45,29 @@ jobs:
           else
             echo "tag=" >> $GITHUB_OUTPUT
           fi
+      
+      - name: Set extension variable
+        id: ext
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "ext=.exe" >> $GITHUB_OUTPUT
+          else
+            echo "ext=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Rename & move built t_renderer
         shell: bash
-        run: |
-          EXT=""
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            EXT=".exe"
-          fi
-          mv target/release/t_renderer$EXT t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
+        run: mv target/release/t_renderer${{ steps.ext.outputs.ext }} t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
 
       - name: Upload t_renderer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
-          path: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
+          name: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
+          path: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
-          files: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
+          files: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
