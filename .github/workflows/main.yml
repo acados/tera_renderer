@@ -1,9 +1,6 @@
 name: Releases
 
 on: push
-#  push:
-#    tags:
-#    - '*'
 
 jobs:
   build:
@@ -15,57 +12,62 @@ jobs:
         include:
           - runs-on: ubuntu-latest
             architecture: linux-amd64
-          - runs-on: macos-latest
+          - runs-on: macos-13
             architecture: osx-amd64
           - runs-on: windows-latest
             architecture: windows-amd64
+          - runs-on: ubuntu-24.04-arm
+            architecture: linux-arm64
+          - runs-on: windows-11-arm
+            architecture: windows-arm64
+          - runs-on: macos-latest
+            architecture: osx-arm64
 
-    name: Build on ${{ matrix.runs-on }}
+    name: Build on ${{ matrix.architecture }}
 
     steps:
       - name: Setup | Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
+
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Build
         run: |
           cargo build --verbose --release;
 
-      - name: Upload t_renderer Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: t_renderer-${{ matrix.architecture }}
-          path: ${{ runner.os == 'Windows' && 'target\\release\\t_renderer.exe' || 'target/release/t_renderer' }}
+      - name: Set tag variable
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "tag=-${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Set extension variable
+        id: ext
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "ext=.exe" >> $GITHUB_OUTPUT
+          else
+            echo "ext=" >> $GITHUB_OUTPUT
+          fi
 
-  build-on-aarch:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    name: Build on aarch64
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build in aarch64 Docker
-        uses: uraimo/run-on-arch-action@v2
-        with:
-          arch: aarch64
-          distro: ubuntu_latest
-          setup: |
-            mkdir -p "${PWD}/artifacts"
-          dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts"
-          install: |
-            apt-get update
-            apt-get install -y curl build-essential
-            curl https://sh.rustup.rs -sSf | sh -s -- -y
-
-          run: |
-            $HOME/.cargo/bin/cargo build --verbose --release;
-            cp target/release/t_renderer /artifacts/t_renderer
+      - name: Rename & move built t_renderer
+        shell: bash
+        run: mv target/release/t_renderer${{ steps.ext.outputs.ext }} t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
 
       - name: Upload t_renderer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: t_renderer-aarch64
-          path: artifacts/t_renderer
+          name: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
+          path: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}${{ steps.ext.outputs.ext }}
