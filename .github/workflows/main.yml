@@ -36,6 +36,16 @@ jobs:
         run: |
           cargo build --verbose --release;
 
+      - name: Set tag variable
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "tag=-${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Rename & move built t_renderer
         shell: bash
         run: |
@@ -43,16 +53,16 @@ jobs:
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             EXT=".exe"
           fi
-          mv target/release/t_renderer$EXT t_renderer-${{ matrix.architecture }}
+          mv target/release/t_renderer$EXT t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
 
       - name: Upload t_renderer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: t_renderer-${{ matrix.architecture }}
-          path: t_renderer-${{ matrix.architecture }}
+          name: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
+          path: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
-          files: t_renderer-${{ matrix.architecture }}
+          files: t_renderer${{ steps.tag.outputs.tag }}-${{ matrix.architecture }}
