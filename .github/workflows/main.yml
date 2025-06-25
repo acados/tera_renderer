@@ -10,17 +10,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runs-on: ubuntu-latest
+          - runs-on: ubuntu-22.04
             architecture: linux-amd64
           - runs-on: macos-13
             architecture: osx-amd64
-          - runs-on: windows-latest
+          - runs-on: windows-2019
             architecture: windows-amd64
-          - runs-on: ubuntu-24.04-arm
+          - runs-on: ubuntu-22.04-arm
             architecture: linux-arm64
           - runs-on: windows-11-arm
             architecture: windows-arm64
-          - runs-on: macos-latest
+          - runs-on: macos-15
             architecture: osx-arm64
 
     name: Build on ${{ matrix.architecture }}
