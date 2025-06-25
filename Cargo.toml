@@ -1,7 +1,7 @@
 [package]
 name = "t_renderer"
 version = "0.2.0"
-authors = ["andrea.zanelli <andrea.zanelli@imtek.uni-freiburg.de>"]
+authors = ["acados authors"]
 edition = "2018"
 
 [dependencies]

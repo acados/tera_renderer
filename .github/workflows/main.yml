@@ -1,6 +1,6 @@
 name: Releases
 
-on: push
+on: [push, pull_request]
 
 jobs:
   build:
@@ -45,7 +45,7 @@ jobs:
           else
             echo "tag=" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Set extension variable
         id: ext
         shell: bash
