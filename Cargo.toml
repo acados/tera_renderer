@@ -1,6 +1,6 @@
 [package]
 name = "t_renderer"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["acados authors"]
 edition = "2018"
 

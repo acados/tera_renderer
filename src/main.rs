@@ -17,7 +17,26 @@ struct Args {
     out_file: String
 }
 
-fn main()   -> io::Result<()> {
+fn extract_key_with_prefix(msg: &str, prefix: &str) -> Option<String> {
+    msg.split(prefix)
+        .nth(1)
+        .and_then(|s| s.split('`').next())
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+}
+
+fn extract_missing_context_key(render_error: &tera::Error) -> Option<String> {
+    let detailed_error = format!("{:#}", render_error);
+    extract_key_with_prefix(&detailed_error, "Variable `")
+        .or_else(|| extract_key_with_prefix(&detailed_error, "Field `"))
+        .or_else(|| {
+            let debug_error = format!("{:?}", render_error);
+            extract_key_with_prefix(&debug_error, "Variable `")
+                .or_else(|| extract_key_with_prefix(&debug_error, "Field `"))
+        })
+}
+
+fn main() -> io::Result<()> {
     // read command line arguments
     let args = Args::parse();
 
@@ -41,14 +60,21 @@ fn main()   -> io::Result<()> {
     // println!("{}", contents);
     
     // Parse the string of data into serde_json::Value.
-    let v: serde_json::Value = serde_json::from_str(&contents)?;
+    let v: serde_json::Value = serde_json::from_str(&contents).map_err(|e| {
+        io::Error::new(io::ErrorKind::InvalidData, format!("Invalid JSON context: {}", e))
+    })?;
     // Convert serde_json::Value to tera::Context
-    let ctx: Context = Context::from_serialize(&v).unwrap();
+    let ctx: Context = Context::from_serialize(&v).map_err(|e| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("Failed to build template context from JSON: {}", e),
+        )
+    })?;
 
     let tera = match Tera::new(template_glob) {
         Ok(t) => t,
         Err(e) => {
-            println!("Parsing error(s): {}", e);
+            eprintln!("Template parsing error(s): {}", e);
             ::std::process::exit(1);
         }
     };
@@ -59,7 +85,13 @@ fn main()   -> io::Result<()> {
             f_out.write_all(s.as_bytes())?;
         },
         Err(e) => {
-            println!("Error: {}", e);
+            if let Some(missing_key) = extract_missing_context_key(&e) {
+                eprintln!(
+                    "Error: missing context value `{}` required by template `{}`.",
+                    missing_key, template_file
+                );
+            }
+            eprintln!("Render error: {}", e);
             process::exit(1);
         }
     };
